@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Blood Type Calculator</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #f6f8fb;
+            font-family: Arial, "Helvetica Neue", Helvetica, sans-serif;
+        }
+
+        .container {
+            margin: 20px auto;
+            padding: 20px;
+            max-width: 600px;
+            background-color: #10a1c5;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h2 {
+            text-align: center;
+            color: #333;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        select {
+            width: 100%;
+            padding: 8px;
+            font-size: 1em;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #eceef1;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            text-align: center;
+        }
+
+        .button {
+            width: 100%;
+            padding: 10px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 1em;
+            cursor: pointer;
+        }
+
+        .button:hover {
+            background-color: #218838;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Blood Type Calculator</h2>
+        <form id="bloodTypeForm">
+            <div class="form-group">
+                <label for="relative1">Relative 1:</label>
+                <select id="relative1">
+                    <option value="Mother">Mother</option>
+                    <option value="Father">Father</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="bloodType1">Blood Type:</label>
+                <select id="bloodType1">
+                    <option value="0+">0+</option>
+                    <option value="0-">0-</option>
+                    <option value="A+">A+</option>
+                    <option value="A-">A-</option>
+                    <option value="B+">B+</option>
+                    <option value="B-">B-</option>
+                    <option value="AB+">AB+</option>
+                    <option value="AB-">AB-</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="relative2">Relative 2:</label>
+                <select id="relative2">
+                    <option value="Mother">Mother</option>
+                    <option value="Father">Father</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="bloodType2">Blood Type:</label>
+                <select id="bloodType2">
+                    <option value="0+">0+</option>
+                    <option value="0-">0-</option>
+                    <option value="A+">A+</option>
+                    <option value="A-">A-</option>
+                    <option value="B+">B+</option>
+                    <option value="B-">B-</option>
+                    <option value="AB+">AB+</option>
+                    <option value="AB-">AB-</option>
+                </select>
+            </div>
+            <button type="submit" class="button">Calculate</button>
+        </form>
+
+        <div id="result" class="result" style="display: none;">
+            Possible Blood Types:<br>
+            <span id="bloodTypeResult"></span><br><br>
+            Percentages:<br>
+            <span id="percentageResult"></span>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById("bloodTypeForm").addEventListener("submit", function(event) {
+            event.preventDefault();
+
+            const bloodType1 = document.getElementById("bloodType1").value;
+            const bloodType2 = document.getElementById("bloodType2").value;
+
+            const bloodTypeMatrix = {
+                '0+': { '0+': 50, '0-': 50, 'A+': 25, 'A-': 25, 'B+': 25, 'B-': 25, 'AB+': 0, 'AB-': 0 },
+                '0-': { '0+': 50, '0-': 25, 'A+': 25, 'A-': 25, 'B+': 25, 'B-': 25, 'AB+': 0, 'AB-': 0 },
+                'A+': { '0+': 25, '0-': 25, 'A+': 50, 'A-': 25, 'B+': 25, 'B-': 25, 'AB+': 25, 'AB-': 0 },
+                'A-': { '0+': 25, '0-': 25, 'A+': 25, 'A-': 50, 'B+': 0, 'B-': 0, 'AB+': 25, 'AB-': 0 },
+                'B+': { '0+': 25, '0-': 25, 'A+': 25, 'A-': 0, 'B+': 50, 'B-': 25, 'AB+': 25, 'AB-': 0 },
+                'B-': { '0+': 25, '0-': 25, 'A+': 0, 'A-': 0, 'B+': 25, 'B-': 50, 'AB+': 25, 'AB-': 0 },
+                'AB+': { '0+': 0, '0-': 0, 'A+': 25, 'A-': 0, 'B+': 25, 'B-': 0, 'AB+': 50, 'AB-': 25 },
+                'AB-': { '0+': 0, '0-': 0, 'A+': 0, 'A-': 0, 'B+': 0, 'B-': 0, 'AB+': 25, 'AB-': 50 }
+            };
+
+            let possibleTypes = new Set();
+            let percentages = {};
+
+            // Get possible child blood types based on parents' blood types
+            for (let type2 in bloodTypeMatrix[bloodType1]) {
+                const percentage = bloodTypeMatrix[bloodType1][type2] + bloodTypeMatrix[bloodType2][type2];
+                if (percentage > 0) {
+                    possibleTypes.add(type2);
+                    percentages[type2] = (percentages[type2] || 0) + percentage; // Accumulate percentages
+                }
+            }
+
+            // Normalize percentages to ensure the highest is 100
+            const total = Math.max(...Object.values(percentages));
+            for (let type in percentages) {
+                percentages[type] = Math.round((percentages[type] / total) * 100);
+            }
+
+            document.getElementById("bloodTypeResult").innerText = Array.from(possibleTypes).join(', ');
+
+            // Display percentages
+            let percentageOutput = "";
+            for (let type in percentages) {
+                percentageOutput += `${type}: ${percentages[type]}%<br>`;
+            }
+            document.getElementById("percentageResult").innerHTML = percentageOutput;
+
+            document.getElementById("result").style.display = 'block';
+        });
+    </script>
+</body>
+</html>
